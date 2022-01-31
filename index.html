@@ -1,12 +1,13 @@
 <!DOCTYPE html>
 
-<html lang="en">
+<html lang="en" style='text-align: justify;'>
 	<head>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1">
 		<title>Documentation - SD</title>
 		<link rel="alternate icon" type="image/png" href="favicon.ico">
-		<link rel="stylesheet" href="style.css">
+		<link rel="stylesheet" href="/css/style.css">
+		<link rel="stylesheet" href="/css/code.css">
 	</head>
 	<body>
 
@@ -14,8 +15,8 @@
 
 			<div class="sidebar">
 				<div class="logo">
-					<a href="https://matthmr.github.io/docs.sd/index.html">
-						<img src='favicon.ico' alt="SD">
+					<a href="/index.html">
+						<img src='/assets/favicon.ico' alt="SD">
 					</a>
 				</div>
 
@@ -24,7 +25,7 @@
 						<h3>Resources</h3>
 						<li><a href="https://github.com/matthmr/sd">Language source code</a></li>
 						<li><a href="https://github.com/matthmr/docs.sd">Website source code</a></li>
-						<li> <a href="https://matthmr.github.io/docs.sd/index.html">Index</a></li>
+						<li> <a href="/index.html">Index</a></li>
 					</ul>
 				</div>
 
@@ -35,7 +36,7 @@
 					<div class="upper-article-padding"> </div>
 				</div>
 				<div class="content-html">
-					<h1>SD (programming language)</h1>
+					<h1>SD (Programming Language)</h1>
 
 					<p>
 					This documents the inner workings of the <a href="https://github.com/matthmr/sd">SD language</a>,
@@ -48,17 +49,105 @@
 							<li>
 								<span>1 </span><a href="#main-paradigm">Main paradigm</a>
 							</li>
+							<li>
+								<span>2 </span><a href="#running-sd">Running SD source code</a>
+							</li>
+							<li>
+								<span>3 </span><a href="#syntax">Syntax</a>
+							</li>
+							<li>
+								<span>3.1 </span><a href="#keywords">Keywords</a>
+							</li>
 						</ul>
 					</div>
 					<h2>Main paradigm</h2>
-					<p>In the SD programming language, <b>everything</b> is an object.</p>
-					<p>THIS IS PLACEHOLDER FOR WHEN THE DOCUMENTATION IS DONE. </p>
-			</div>
+					<p>In the SD programming language, <b>everything</b> is an object. Literals are implicit instances of objects (<code> int </code> type, <code> string </code> type and such). Functions, expression blocks (conditional blocks), all are in some form or another considered and treated as objects.
+					</p>
+					<p>SD has only one protocol to deal with anything defined within the language itself, that protocol only changes when dealing with source code in C. As far as the language is concerned, the file in which the programmer defines objects, types and procedures is itself an object which can be added to another one in the form of a <a href="/sd/module.html">module</a> which is used (included) using the <a href="/sd/keywords.html"><code>import</code></a> keyword. Each and every file is defined as the <b>root object</b> akin to how a disk filesystem operates.</p>
+					<p>Flow control is done by means of <b>resolution</b>: expression blocks that execute some code, scoped by their block. Functions are in essence just objects whose resolutions are (or can be) parametrised.</p>
+					<p>SD has a way of putting objects together herein known as <a href="/sd/hooks.html"><b>hooks</b></a>. Hooks are the way for the language to differetiate between object definition, conditional resolution, syncing, etc. Some of the most used hooks are:</p>
+
+				<table class="wiki-table">
+					<tr>
+						<td class="wiki-table-code"><code>expr</code></td>
+						<td class="wiki-table-content">Conditionally resolute the object definition. Act as <code>if</code> if unhooked, <code>else if</code> when hooked to an <code>expr</code></td>
+					<tr>
+					<tr>
+						<td class="wiki-table-code"><code>branch</code></td>
+						<td class="wiki-table-content">Unconditionally resolute the object definition. Act as a normal object definition if unhooked, <code>else</code> if hooked to an <code>expr</code></td>
+					<tr>
+					<tr>
+						<td class="wiki-table-code"><code>proc</code></td>
+						<td class="wiki-table-content">Resolutes the object definition on call, passing scoped parameters and syncing an object in return</td>
+					<tr>
+				</table>
+				<p>As such, an <code>if</code> - <code>else if</code> - <code>else</code> conditional might look like:
+				<div class="wcode-block"> <code class="code-block">
+expr &lt;expression1&gt;: { # if expression1
+	...
+} expr &lt;expression2&gt;: { # else if expression2
+	...
+} branch: { # else
+	...
+};
+				</code></div>
+				<p>Note the expression terminator <code>;</code> only appears <b>after</b> the <code>branch</code> keyword. <em>That</em> is what hooking means in SD: putting objects and object definitions one after the other.</p>
+
+				<h2>Running SD</h2>
+				<p>SD source code is primarily <b>human readable</b> but in order to improve both speed and decrease storage, it can be compiled into <a href="/sd/bytecode.html">bytecode</a>. Regardless of the type, the default program found in the <a href="//github.com/matthmr/sd">language repository</a> that reads them is <a href="/sd/sdread.html"<b>sdread</b></a>.</p>
+				<p>The interpreter can also link against compiled modules either by importing them with <code>import &lt;module&gt;;</code> or with the <code>-m</code> option in sdread. Furthermore, the interpreter can evaluate a 'put' expression given a script or not. Those expressions are defined at the end of the current file root or of the explicitly given root, then executed. More on the sdread in <a href="//raw.githubusercontent.com/matthmr/sd/master/man/man1/sdread.1"><code>sdread(1)</code></a>.</p>
+				<p>The default SD compiler is <a href="/sd/sdc.html"><b>sdc</b></a>. It compile SD source code into SD bytecode, both of which can be read by <b>sdread</b>, bytecode passing the <code>-s</code> flag before the filename. Bytecode files, albeit non-human-readable, are generally parsed and executed faster than plain-text files. Also, some <a href="/sd/keywords.html">jumping keywords</a> cases <em>only</em> work when the file is compiled into bytecode.</p>
+
+				<h2>Syntax</h2>
+				<p>SD source code syntax can be broken down into this simple form:</p>
+				<div class="wcode-block"> <code class="code-block">
+&lt;hooks&gt; &lt;keyword&gt; &lt;object name&gt;: &lt;hooks&gt;{
+	# &lt;comment&gt;
+	&lt;literal&gt;;
+	&lt;another definition&gt;;
+};
+
+# where the terminator <code>;</code>
+# might not exist if the object itself
+# is a hook (like an <code>expr</code>)
+				</code> </div>
+				<p>Once objects are defined by <code>:</code>, dereferencing them can be done by using <code>@</code>, example:</p>
+
+				<div class="wcode-block"> <code class="code-block">
+file.sd:
+	1    let greeting: "Hello World\n";
+	2    (put @greeting);
+---
+$ sdread file.sd
+Hello World
+				</code> </div>
+
+				<p>As seen by the example above, if the value that the object points to is a literal, there is no need for the <code>{}</code> delimiters.</p>
+				<p>If an object has children that are not literals, then referencing those is done using <code>/</code>, as in:</p>
+
+				<div class="wcode-block"> <code class="code-block">
+file.sd:
+	1    let greeting: {
+	2      this: "Hello World\n";
+	3      language: "English\n";
+	4    };
+	5    (put "Greeting: " @greeting)
+	6    (put "Language: " @greeting/language);
+---
+$ sdread file.sd
+Greeting: Hello World
+Language: English
+				</code> </div>
+
+				<p>For the example below, we'll be comparing it to its C equivalent: </p>
+				<p> TODO </p>
+
+				</div>
 
 				<div class="footer">
 					<div>
 						<a href="https://github.com/matthmr">
-							<img style='padding-right: 10px;' src='assets/github.png'>made by mH
+							<img style='padding-right: 10px;' src='/assets/github.png'>made by mH
 						</a>
 					</div>
 				</div>
