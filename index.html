@@ -5,9 +5,9 @@
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1">
 		<title>Documentation - SD</title>
-		<link rel="alternate icon" type="image/png" href="favicon.ico">
-		<link rel="stylesheet" href="/css/style.css">
-		<link rel="stylesheet" href="/css/code.css">
+		<link rel="alternate icon" type="image/png" href="/docs.sd/assets/favicon.ico">
+		<link rel="stylesheet" href="/docs.sd/css/style.css">
+		<link rel="stylesheet" href="/docs.sd/css/code.css">
 	</head>
 	<body>
 
@@ -15,8 +15,8 @@
 
 			<div class="sidebar">
 				<div class="logo">
-					<a href="/index.html">
-						<img src='/assets/favicon.ico' alt="SD">
+					<a href="/docs.sd/index.html">
+						<img src='/docs.sd/assets/favicon.ico' alt="SD">
 					</a>
 				</div>
 
@@ -25,7 +25,7 @@
 						<h3>Resources</h3>
 						<li><a href="https://github.com/matthmr/sd">Language source code</a></li>
 						<li><a href="https://github.com/matthmr/docs.sd">Website source code</a></li>
-						<li> <a href="/index.html">Index</a></li>
+						<li> <a href="/docs.sd/index.html">Index</a></li>
 					</ul>
 				</div>
 
@@ -63,9 +63,9 @@
 					<h2>Main paradigm</h2>
 					<p>In the SD programming language, <b>everything</b> is an object. Literals are implicit instances of objects (<code> int </code> type, <code> string </code> type and such). Functions, expression blocks (conditional blocks), all are in some form or another considered and treated as objects.
 					</p>
-					<p>SD has only one protocol to deal with anything defined within the language itself, that protocol only changes when dealing with source code in C. As far as the language is concerned, the file in which the programmer defines objects, types and procedures is itself an object which can be added to another one in the form of a <a href="/sd/module.html">module</a> which is used (included) using the <a href="/sd/keywords.html"><code>import</code></a> keyword. Each and every file is defined as the <b>root object</b> akin to how a disk filesystem operates.</p>
+					<p>SD has only one protocol to deal with anything defined within the language itself, that protocol only changes when dealing with source code in C. As far as the language is concerned, the file in which the programmer defines objects, types and procedures is itself an object which can be added to another one in the form of a <a href="/docs.sd/sd/module.html">module</a> which is used (included) using the <a href="/docs.sd/sd/keywords.html"><code>import</code></a> keyword. Each and every file is defined as the <b>root object</b> akin to how a disk filesystem operates.</p>
 					<p>Flow control is done by means of <b>resolution</b>: expression blocks that execute some code, scoped by their block. Functions are in essence just objects whose resolutions are (or can be) parametrised.</p>
-					<p>SD has a way of putting objects together herein known as <a href="/sd/hooks.html"><b>hooks</b></a>. Hooks are the way for the language to differetiate between object definition, conditional resolution, syncing, etc. Some of the most used hooks are:</p>
+					<p>SD has a way of putting objects together herein known as <a href="/docs.sd/sd/hooks.html"><b>hooks</b></a>. Hooks are the way for the language to differetiate between object definition, conditional resolution, syncing, etc. Some of the most used hooks are:</p>
 
 				<table class="wiki-table">
 					<tr>
@@ -94,9 +94,9 @@ expr &lt;expression1&gt;: { # if expression1
 				<p>Note the expression terminator <code>;</code> only appears <b>after</b> the <code>branch</code> keyword. <em>That</em> is what hooking means in SD: putting objects and object definitions one after the other.</p>
 
 				<h2>Running SD</h2>
-				<p>SD source code is primarily <b>human readable</b> but in order to improve both speed and decrease storage, it can be compiled into <a href="/sd/bytecode.html">bytecode</a>. Regardless of the type, the default program found in the <a href="//github.com/matthmr/sd">language repository</a> that reads them is <a href="/sd/sdread.html"<b>sdread</b></a>.</p>
+				<p>SD source code is primarily <b>human readable</b> but in order to improve both speed and decrease storage, it can be compiled into <a href="/docs.sd/sd/bytecode.html">bytecode</a>. Regardless of the type, the default program found in the <a href="//github.com/matthmr/sd">language repository</a> that reads them is <a href="/docs.sd/sd/sdread.html"<b>sdread</b></a>.</p>
 				<p>The interpreter can also link against compiled modules either by importing them with <code>import &lt;module&gt;;</code> or with the <code>-m</code> option in sdread. Furthermore, the interpreter can evaluate a 'put' expression given a script or not. Those expressions are defined at the end of the current file root or of the explicitly given root, then executed. More on the sdread in <a href="//raw.githubusercontent.com/matthmr/sd/master/man/man1/sdread.1"><code>sdread(1)</code></a>.</p>
-				<p>The default SD compiler is <a href="/sd/sdc.html"><b>sdc</b></a>. It compile SD source code into SD bytecode, both of which can be read by <b>sdread</b>, bytecode passing the <code>-s</code> flag before the filename. Bytecode files, albeit non-human-readable, are generally parsed and executed faster than plain-text files. Also, some <a href="/sd/keywords.html">jumping keywords</a> cases <em>only</em> work when the file is compiled into bytecode.</p>
+				<p>The default SD compiler is <a href="/docs.sd/sd/sdc.html"><b>sdc</b></a>. It compile SD source code into SD bytecode, both of which can be read by <b>sdread</b>, bytecode passing the <code>-s</code> flag before the filename. Bytecode files, albeit non-human-readable, are generally parsed and executed faster than plain-text files. Also, some <a href="/docs.sd/sd/keywords.html">jumping keywords</a> cases <em>only</em> work when the file is compiled into bytecode.</p>
 
 				<h2>Syntax</h2>
 				<p>SD source code syntax can be broken down into this simple form:</p>
@@ -147,7 +147,7 @@ Language: English
 				<div class="footer">
 					<div>
 						<a href="https://github.com/matthmr">
-							<img style='padding-right: 10px;' src='/assets/github.png'>made by mH
+							<img style='padding-right: 10px;' src='/docs.sd/assets/github.png'>made by mH
 						</a>
 					</div>
 				</div>
