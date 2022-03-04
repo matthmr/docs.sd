@@ -35,5 +35,6 @@ table {
 	text-align: center;
 	color: white;
 	white-space: pre;
+	word-wrap: break-word;
 }
 
