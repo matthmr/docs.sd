@@ -1,260 +1,103 @@
 <!DOCTYPE html>
-
-<html lang="en" style='text-align: justify;'>
-	<head>
-		<meta charset="utf-8">
-		<meta name="viewport" content="width=device-width, initial-scale=1">
-		<title>Documentation - SD</title>
-		<link rel="alternate icon" type="image/png" href="/docs.sd/assets/favicon.ico">
-		<link rel="stylesheet" href="/docs.sd/css/style.css">
-		<link rel="stylesheet" href="/docs.sd/css/code.css">
-	</head>
-	<body>
-
-		<div class="wrapper pad">
-
-			<div class="sidebar">
-				<div class="logo">
-					<a href="/docs.sd/index.html">
-						<img src='/docs.sd/assets/favicon.ico' alt="SD">
-					</a>
-				</div>
-
-				<div class="navigation">
-					<ul>
-						<h3>Resources</h3>
-						<li><a href="https://github.com/matthmr/sd">Language source code</a></li>
-						<li><a href="https://github.com/matthmr/docs.sd">Website source code</a></li>
-						<li> <a href="/docs.sd/index.html">Index</a></li>
-					</ul>
-				</div>
-
-			</div>
-
-			<div class="content">
-				<div class="pad">
-					<div class="upper-article-padding"> </div>
-				</div>
-				<div class="content-html">
-					<h1>SD (Programming Language)</h1>
-
-					<p>
-					This documents the inner workings of the <a href="https://github.com/matthmr/sd">SD language</a>: the language paradigms and syntax.
-					</p>
-					<p>
-					For in-depth documentation about the language implementation, go to the <a href="https://github.com/matthmr/sd/tree/master/docs">code index</a> on the SD repository.
-					Do notice, however, that documents there are <b>not</b> hyperlinked and go into detail about the language stack rather than the language syntax.
-					</p>
-
-					<div class="index">
-						<div class="index-title">Index</div>
-						<ul>
-							<li>
-								<span>1 </span><a href="#main-paradigm">Main paradigm</a>
-							</li>
-							<li>
-								<span>2 </span><a href="#running-sd">Running SD source code</a>
-							</li>
-							<li>
-								<span>3 </span><a href="#syntax">Syntax</a>
-							</li>
-							<li>
-								<span>&emsp;3.1 </span><a href="#syntax-general">General</a>
-							</li>
-							<li>
-								<span>&emsp;3.2 </span><a href="#syntax-expr">Expression hook</a>
-							</li>
-							<li>
-								<span>&emsp;3.3 </span><a href="#syntax-proc">Procedures</a>
-							</li>
-							<li>
-								<span>&emsp;3.3 </span><a href="#syntax-list">Arrays</a>
-							</li>
-						</ul>
-					</div>
-					<h2 id="main-paradigm">Main paradigm</h2>
-					<p>In the SD programming language, <b>everything</b> is an object. Literals are implicit instances of objects (<code> int </code> type, <code> char </code> type and such ). Functions, expression blocks (conditional blocks), all are in some form or another considered and treated as objects.
-					</p>
-					<p>SD has only one protocol to deal with anything defined within the language itself. As far as the language is concerned, the file in which the programmer defines objects, types and procedures, is itself an object which can be added to another one in the form of a <a href="/docs.sd/sd/module.html">module</a> which is used (included) using the <a href="/docs.sd/sd/keywords.html"><code>import</code></a> keyword. Each and every file is defined as the <b>root object</b> akin to how a disk filesystem operates.</p>
-					<p>Flow control is done by means of <b>resolution</b>: expression blocks that execute some code, scoped by their block. Functions are in essence just objects whose resolutions are (or can be) parametrised. In SD, objects defined on a common parent object do <b>not</b> scope to their sibblings<a href="#to-1" id="from-1"><sup>1</sup></a> by default, that is:</p>
-					<div class="wcode-block">
-						<code class="code-block">
-let obj1;
-let nested_obj: {
-	...
+<html>
+<head>
+<title>Documentation - SD</title>
+<link rel="alternate icon"
+      type="image/png"
+      href="/docs.sd/assets/favicon.ico">
+</head>
+<h1>SD (Programming Language)</h1>
+<h3>Resources</h3>
+<ul>
+<li><a href="https://github.com/matthmr/sd">Language source code</a></li>
+<li><a href="https://github.com/matthmr/docs.sd">Website source code</a></li>
+<li><a href="/docs.sd/index.html">Index</a></li>
+</ul>
+<p>This documents the inner workings of the <a href="https://github.com/matthmr/sd">SD language</a>: the
+language paradigms and syntax. Not going into too much detail
+about implementation.</p>
+<p>For in-depth documentation about the language implementation,
+go to the <a href="https://github.com/matthmr/sd/tree/master/docs/txt/README">plain text documentation</a> on the SD repository. Do notice,
+however, that documents there are <strong>not</strong> hyperlinked and go into
+detail about the language stack rather than the language syntax.</p>
+<h2>Index</h2>
+<ol>
+<li><a href="#main-paradigm">Main Paradigm</a></li>
+<li><a href="#running-sd">Running SD</a></li>
+<li><a href="#syntax">Syntax</a>
+<ol>
+<li><a href="#scope">Scope</a></li>
+</ol>
+</li>
+</ol>
+<h2>Main paradigm</h2>
+<p>In the SD programming language, the main paradigm is that objects are
+treat as being <strong>resolved</strong> or <strong>structured</strong>. To SD, an object is just
+an entry of its object table (which itself is a segment of the
+process' heap) that contains some raw data and some type metadata.
+If the data is considered &quot;resolved&quot;, that means no further processing
+may be needed on that piece of data other than referencing and
+dereferencing. An example of that would be an <code>int</code>, <code>char[]</code>, etc.</p>
+<p>However, if the data is considered &quot;structured&quot; or &quot;unresolved&quot;, its
+content could be that of an <strong>executable</strong>, <strong>class</strong>, <strong>type</strong>, or any other set
+of operations (including general <a href="https://en.wikipedia.org/wiki/Abstract_syntax_tree">AST</a> branches) that don't have a return
+value yet. That in turn makes the object table a sort of <em>virtual memory</em>
+for the SD language, with the &quot;resolved&quot; section being the equivalent
+of the <code>.data</code> section and the &quot;structured&quot; section being the equivalent
+of the <code>.text</code> section but much more general because the parsing of the
+source code is done at runtime because the language is interpreted.</p>
+<h2>Running SD</h2>
+<p>SD is an <strong>interpreted</strong> language which means it needs an interpreter to
+execute its source code, in that sense SD could be used as more of a
+scripting language like python rather than a general purpose like C or
+rust. The default interpreter is <code>sd</code> (a symbolic link to <code>sdread</code>) which
+is a compilation result from <code>make parser</code> (see the <a href="https://github.com/matthmr/sd#building">compilation guide</a>).</p>
+<p>A dump of SD's object table can be written to a file and read by <code>sd</code>
+passing the <code>-s</code> flag. As per convention, SD source code files have <code>.sd</code>
+as extension and object table dumps called <em>object files</em> have <code>.sdo</code>
+as extension. SD object files are compiled by <code>sdc</code>, another result
+of <code>make parser</code>.</p>
+<h2>Syntax</h2>
+<p>SD has a unique syntax for a scripting language because:</p>
+<ol>
+<li>Its variables are strongly typed.</li>
+<li>There is a distinction between variable declaring / initializing and
+(re)assignment.</li>
+</ol>
+<p>To define a variable in SD you follow:</p>
+<pre><code>let? &lt;type&gt; &lt;name&gt; : &lt;value&gt; ;
+</code></pre>
+<p>As in:</p>
+<pre><code>int year : 2022;
+string name : &quot;Two Thousand Twenty Two&quot;;
+</code></pre>
+<p>The <code>let</code> keyword is optional when defining variables as their type can often
+be infered by a literal. So <code>int year : 2022;</code> is the same as <code>let year : 2022;</code>.
+The same is not true for <strong>structures</strong>, <strong>unions</strong> or <strong>classes</strong>. Say there is a
+structure &quot;<code>Year</code>&quot; that has <code>int number, string name</code> fields, to define such
+variable one could write:</p>
+<pre><code>Year year : [ 2022, &quot;Two Thousand Twenty Two&quot; ];
+# or
+Year year : {
+	$number : 2022;
+	$name   : &quot;Two Thousand Twenty Two&quot;;
 };
-						</code>
-					</div>
-					<p>In this case, <code>obj1</code> is <b>not</b> visible to <code>nested_obj</code> by default. It only becomes visible with the <code>scope</code> keyword, as in: '<code>let scope obj1;</code>'. However, that only applies to its <em>sibblings</em> and not to anything a generation before it.</p>
-					<p>SD has a way of putting objects together herein known as <a href="/docs.sd/sd/hooks.html"><b>hooks</b></a>. Hooks are the way for the language to differentiate between object definition, conditional resolution, syncing, etc. Some of the most used hooks are:</p>
-
-				<table class="wiki-table">
-					<tr>
-						<td class="wiki-table-code"><code>expr</code></td>
-						<td class="wiki-table-content">Conditionally resolute the object definition. Act as <code>if</code> if unhooked, <code>else if</code>  when hooked to another <code>expr</code> and <code>else</code> otherwise</td>
-					</tr>
-					<tr>
-						<td class="wiki-table-code"><code>branch</code></td>
-						<td class="wiki-table-content">Unconditionally resolute the object definition. Can be used with <code>async</code> to unconditionally not resolute the object definition</td>
-					</tr>
-				</table>
-				<p>As such, an '<code>if</code>'-'<code>else if</code>'-'<code>else</code>' conditional might look like:
-				<div class="wcode-block" id="expr-example"> <code class="code-block">
-expr &lt;expression1&gt;: { # if expression1
-	...
-}
-
-&lt;expression2&gt;: { # else if expression2
-	...
-}
-
-{ # else
-	...
-};
-				</code></div>
-				<p>Note the expression terminator <code>;</code> only appears <b>after</b> the last block. <em>That</em> is what hooking means in SD: putting objects and object definitions one after the other.</p>
-				<p>Also, as per SD syntax, the first hook that is used on a object (<code>expr</code> in this case), scope to its children hooks. As such, a single linked '<code>if</code>'-'<code>else if</code>'-'<code>else</code>' conditional block only needs to have one instance of <code>expr</code> to delimit itself from other blocks. Other instances are allowed but are considered redundant and add nothing to the block.</p>
-				<p>While extra '<code>else</code>' statements are allowed, they don't resolute after the first. However masking '<code>branch</code>' makes of them jump-only labels, as in:</p>
-				<div class="wcode-block">
-					<code class="code-block">
-expr &lt;expression&gt;: {
-	...
-}
-branch first_else: {
-	...
-}
-branch second_else: {
-	...
-};
-					</code>
-				</div>
-				<p>In SD, <code>expr</code>s have a higher precedence than <code>branch</code>es, so this syntax is completly valid.</p>
-
-				<h2 id="running-sd">Running SD</h2>
-				<p>SD source code is primarily <b>human readable</b> but in order to improve both speed and decrease storage, it can be compiled into <a href="/docs.sd/sd/bytecode.html">bytecode</a>. Regardless of the type, the default program found in the <a href="//github.com/matthmr/sd">language repository</a> that reads them is <a href="/docs.sd/sd/sdread.html"<b>sdread</b></a>.</p>
-				<p>The interpreter can also link against compiled modules either by importing them with <code>import &lt;module&gt;;</code> or with the <code>-m</code> option in sdread. Furthermore, the interpreter can evaluate a 'put' expression given a script or not. Those expressions are defined at the end of the current file root or of the explicitly given root, then executed. More on the sdread in <a href="//raw.githubusercontent.com/matthmr/sd/master/man/man1/sdread.1"><code>sdread(1)</code></a>.</p>
-				<p>The default SD compiler is <a href="/docs.sd/sd/sdc.html"><b>sdc</b></a>. It compile SD source code into SD bytecode, both of which can be read by <b>sdread</b>, bytecode passing the <code>-s</code> flag before the filename. Bytecode files, albeit non-human-readable, are generally parsed and executed faster than plain-text files. Also, some <a href="/docs.sd/sd/keywords.html">jumping keywords</a> cases <em>only</em> work when the file is compiled into bytecode.</p>
-
-				<h2 id="syntax">Syntax</h2>
-				<h3 id="syntax-general">General</h3>
-				<p>SD source code syntax can be broken down into this simple form:</p>
-				<div class="wcode-block"> <code class="code-block">
-&lt;hooks&gt; &lt;keyword&gt; &lt;object name&gt;: &lt;hooks&gt; {
-	&lt;literal&gt;;
-	&lt;another definition&gt;;
-} &lt;hooks&gt;;
-
-# where the terminator <code>;</code>
-# might not exist if the object itself
-# is a hook (like an <code>expr</code>)
-				</code> </div>
-				<p>Once objects are defined by <code>:</code>, dereferencing them can be done by using <code>@</code>, example:</p>
-
-				<div class="wcode-block"> <code class="code-block">
-file.sd:
-	1    import &lt;std/IO&gt;;
-	2    let greeting: "Hello World\n";
-	3    (puts @greeting);
----
-$ sdread file.sd
-Hello World
-				</code> </div>
-
-				<p>As seen by the example above, if the value that the object points to is a literal, there is no need for the <code>{}</code> delimiters.</p>
-				<p>If an object has children that are not literals, then referencing those is done using <code>/</code>, as in:</p>
-
-				<div class="wcode-block"> <code class="code-block">
-file.sd:
-	1    import &lt;std/IO&gt;;
-	2    let greeting: {
-	3      this: "Hello World\n";
-	4      let language: "English\n";
-	5    };
-	6    (puts "Greeting: ", @greeting)
-	7    (puts "Language: ", greeting/@language);
----
-$ sdread file.sd
-Greeting: Hello World
-Language: English
-				</code> </div>
-
-				<p>Where <code>@</code> always goes in the last object name (line 7).</p>
-				<h3 id="syntax-expr">Expr</h3>
-				<p>As shown <a href="#expr-example">before</a>, <code>expr</code>s are hookable objects, meaning that they don't resolute themselves, but control the resolution of an object. <code>expr</code>s act like '<code>if</code>' statements by default but with the <code>jump</code> <a href="/docs.sd/keywords.html">keyword</a> it can become a '<code>while</code>' or '<code>do</code>-<code>while</code>' loop, as in:</p>
-				<div class="wcode-block"> <code class="code-block">
-expr &lt;expression&gt;: { # while
-	...
-	jump;
-};
-branch: { # do-while
-	...
-	expr &lt;expression&gt;: jump ..;
-};
-				</code></div>
-				<p>The <code>jump</code> keyword makes an <b>absolute jump</b><a href="#to-2" id="from-2"><sup>2</sup></a> to a <code>branch</code>. It does not work with functions (procedures) because those <b>do</b> save the position of the instruction pointer before jumping. Also, as a plus to syntax, <code>..</code> refers to the parent object. SD notation of objects is very similar to a UNIX path. Referencing <code>..</code> on the root resolves to itself. <code>this</code> resolves to the current object.</p>
-				<p>Also, as shown in the example, like C SD can get rid of object delimiters (also called <b>resolution delimiters</b> or <b>scope</b>) if the expression has one line. If using this syntax, the object delimiters <code>;</code> ends the expression not the <code>expr</code> chain.</p>
-
-				<h3 id="syntax-proc">Proc</h3>
-				<p>Procedures in SD are the equivalent to functions and classes in other languages. They follow this syntax:</p>
-				<div class="wcode-block"> <code class="code-block">
-proc &lt;proc name&gt;: [&lt;obj1&gt;, &lt;obj2&gt;, ... ] { # args
-	...
-} &lt;type of return&gt; # return
-				</code> </div>
-				<p>Where <em>args</em> and <em>return</em> are optional.</p>
-				<p>Functions are called wrapped around '<code>(</code><code>)</code>' like: <code> (function @arg1, @arg2, ...);</code>. And arguments are separated by '<code>,</code>'.</p>
-				<p>In SD, because everything is an object, the arguments of functions are too. Function arguments are called <b>tuples</b>. A tuple must have the same number of elements as the function and is defined using '<code>[</code><code>]</code>'. Tuples can nest.</p>
-				<p>Here's one example of a '<code>proc</code>-<code>tuple</code>' usage:</p>
-
-				<div class="wcode-block"> <code class="code-block">
-file.sd:
-	1    import &lt;std/IO&gt;;
-	2    proc greet: [name, age] {
-	3        (puts "Hello", @name, ". You have", @age, "years old");
-	4    };
-	5    let bob: ["Bob", "30"];
-	6    (greet @bob);
----
-$ sdread file.sd
-Hello bob. You have 30 years old
-				</code> </div>
-
-				<p>A function can receive an unknown number of arguments by masking '<code>list</code>' then loop through them using the <code>iter</code> keyword. As in:</p>
-
-				<div class="wcode-block"> <code class="code-block">
-file.sd:
-	1    import &lt;std/IO&gt;;
-	2    proc greet: [greet, list names] {
-	3        (put @greet);
-	4        iter names: [name]
-	5            (put @name, ", ");
-	6        (puts "and everyone else!");
-	7    };
-	8    let greet: "Welcome! ";
-	9    let names: ["Bob", "Mary", "Martha", "Satoshi"];
-	10   (greet @greet @names);
----
-$ sdread file.sd
-Welcome! Bob, Mary, Martha, Satoshi, and everyone else!
-				</code> </div>
-
-				</div>
-
-				<div class="footer">
-					<div class="footnote">
-						<div id="to-1">1. <a href="#from-1">^</a> objects of the same parent. </div>
-						<div id="to-2">2. <a href="#from-2">^</a> jumps without saving the previous location (instruction pointer) to the stack unlike a function. </div>
-					</div>
-					<div>&nbsp;</div>
-					<div>
-						<a href="https://github.com/matthmr">
-							<img style='padding-right: 10px;' src='/docs.sd/assets/github.png'>made by mH
-						</a>
-					</div>
-				</div>
-			
-			</div>
-		</div>
-
-	</body>
+</code></pre>
+<p>Field dereference has syntax similar to a directory path, for instance:</p>
+<pre><code>year/@number; # 2022
+year/@name;   # &quot;Two Thousand Twenty Two&quot;;
+</code></pre>
+<p>As oposed to traditional '<code>.</code>' notation (<code>year.number</code>, <code>year.name</code>).</p>
+<p>Also, as you might have noticed, the '<code>@</code>' operator is used to dereference
+variables in SD. By default, if a variable is referenced <strong>without</strong> the '<code>@</code>'
+operator, it is passed <strong>by path</strong>. That is, it is the equivalent of a
+<em>pass-by-reference</em> instead of a <em>pass-by-value</em> operation.</p>
+<p>For instance, in this code:</p>
+<pre><code>let year : 2022;
+let current_year : year;
+let current_year_number : @year;
+</code></pre>
+<p><code>current_year</code> is an <strong>alias</strong> to <code>year</code>, so any changes to <code>current_year</code> also change
+<code>year</code>: they point to the same entry in the object table. In contrast <code>current_year_number</code>
+holds the <strong>value</strong> of <code>year</code>: it has a complete separate entry in the object table.</p>
 </html>
