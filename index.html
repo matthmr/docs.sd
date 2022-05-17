@@ -2,16 +2,23 @@
 <html>
 <head>
 <title>Documentation - SD</title>
+<link rel="stylesheet"
+      href="/docs.sd/styles/source-code.css" >
 <link rel="alternate icon"
       type="image/png"
       href="/docs.sd/assets/favicon.ico">
+<script type="text/javascript"
+      src="/docs.sd/scripts/link-headers.js"
+      defer>
+</script>
 </head>
+<!-- begin markdown -->
 <h1>SD (Programming Language)</h1>
 <h3>Resources</h3>
 <ul>
 <li><a href="https://github.com/matthmr/sd">Language source code</a></li>
 <li><a href="https://github.com/matthmr/docs.sd">Website source code</a></li>
-<li><a href="/docs.sd/index.html">Index</a></li>
+<li><a href="/docs.sd/index.html#index">Index</a></li>
 </ul>
 <p>This documents the inner workings of the <a href="https://github.com/matthmr/sd">SD language</a>: the
 language paradigms and syntax. Not going into too much detail
@@ -26,9 +33,25 @@ detail about the language stack rather than the language syntax.</p>
 <li><a href="#running-sd">Running SD</a></li>
 <li><a href="#syntax">Syntax</a>
 <ol>
-<li><a href="#scope">Scope</a></li>
+<li><a href="#assignment">Variable assignment</a></li>
+<li><a href="#flow-control">Expression flow</a></li>
+<li><a href="#expression-terminator">Expression terminator</a></li>
+<li><a href="#functions">Functions</a></li>
+<li><a href="#arrays">Arrays</a></li>
+<li><a href="#groups">Expression grouping</a></li>
+<li><a href="#casts">Expression casting</a></li>
+<li><a href="#branches">Branching</a></li>
+<li><a href="#modules">Modules</a></li>
+<li><a href="#statement-return">Stack statement</a></li>
+<li><a href="#qualifiers">Qualifiers</a></li>
+<li><a href="#ast-object">Literal Syntax</a></li>
 </ol>
 </li>
+<li><a href="#">Keywords</a></li>
+<li><a href="#">Examples</a></li>
+<li><a href="#">Modules</a></li>
+<li><a href="#">Compiling</a></li>
+<li><a href="#">Embedding</a></li>
 </ol>
 <h2>Main paradigm</h2>
 <p>In the SD programming language, the main paradigm is that objects are
@@ -64,17 +87,18 @@ of <code>make parser</code>.</p>
 <li>There is a distinction between variable declaring / initializing and
 (re)assignment.</li>
 </ol>
+<h3>Assignment</h3>
 <p>To define a variable in SD you follow:</p>
 <pre><code>let? &lt;type&gt; &lt;name&gt; : &lt;value&gt; ;
 </code></pre>
 <p>As in:</p>
 <pre><code>int year : 2022;
-string name : &quot;Two Thousand Twenty Two&quot;;
+&lt;char&gt; name : &quot;Two Thousand Twenty Two&quot;;
 </code></pre>
 <p>The <code>let</code> keyword is optional when defining variables as their type can often
 be infered by a literal. So <code>int year : 2022;</code> is the same as <code>let year : 2022;</code>.
 The same is not true for <strong>structures</strong>, <strong>unions</strong> or <strong>classes</strong>. Say there is a
-structure &quot;<code>Year</code>&quot; that has <code>int number, string name</code> fields, to define such
+structure &quot;<code>Year</code>&quot; that has <code>int number, &lt;char&gt; name</code> fields, to define such
 variable one could write:</p>
 <pre><code>Year year : [ 2022, &quot;Two Thousand Twenty Two&quot; ];
 # or
@@ -100,4 +124,544 @@ let current_year_number : @year;
 <p><code>current_year</code> is an <strong>alias</strong> to <code>year</code>, so any changes to <code>current_year</code> also change
 <code>year</code>: they point to the same entry in the object table. In contrast <code>current_year_number</code>
 holds the <strong>value</strong> of <code>year</code>: it has a complete separate entry in the object table.</p>
+<p>The use of '<code>@</code>' is not needed in expressions <em>other than</em> pass-by-value assignment.
+For example, the boolean:</p>
+<pre><code>let year_is_current_year: year = current_year;
+</code></pre>
+<p>Has the same value of:</p>
+<pre><code>let year_is_current_year: @year = @current_year;
+</code></pre>
+<h3>Flow control</h3>
+<p>SD has two tokens designed for flow control:</p>
+<ul>
+<li><code>?</code> : the equivalent of the <code>if</code> keyword</li>
+<li><code>!</code> : the equivalent of the <code>while</code> keyword</li>
+</ul>
+<p>To make an <em>if</em> or <em>while</em> statement block, it follows this syntax:</p>
+<pre><code># if
+&lt;expr&gt; ? {&lt;body&gt;};
+
+# while
+&lt;expr&gt; ! {&lt;body&gt;};
+</code></pre>
+<p>SD implements <strong>expressions hooks</strong> so that <em>if</em> and/or <em>while</em> statements can be tied together if one
+expression fails. This is the equivalent of an <em>else</em> statement.</p>
+<p>For example, the following:</p>
+<pre><code>import &quot;std/io&quot; &lt;puts&gt;
+
+let year: 2022;
+let unix_epoch: 1970;
+let unix_epoch_32b_lim: 2038;
+
+year = unix_epoch ? {
+	(puts &quot;Welcome to the begining of time!&quot;);
+}
+
+year = unix_epoch_32b_lim ? {
+	(puts &quot;Welcome to the end of time!&quot;);
+}
+
+? {
+	(puts &quot;Time is ticking out...&quot;);
+};
+</code></pre>
+<p>Has the equivalent python code:</p>
+<pre><code>year = 2022
+unix_epoch = 1970
+unix_epoch_32b_lim = 2038
+
+if year == unix_epoch:
+	print (&quot;Welcome to the begining of time!&quot;)
+elif year == unix_epoch_32b_lim:
+	print (&quot;Welcome to the end of time!&quot;)
+else:
+	print (&quot;Time is ticking out...&quot;)
+</code></pre>
+<p>Expression hooks work by making an expression body (the code enclosed by curly braces)
+not have an <strong>expression terminator</strong> (the semicolon). In SD, almost all expressions <strong>must</strong> have an
+expression terminator. If the don't have one <strong>and</strong> the expression is <strong>not</strong> an <em>if</em> or <em>while</em> statement,
+the compiler (or interpreter) will throw a syntax error.</p>
+<p>For example, in this code:</p>
+<pre><code>&lt;expr1&gt;? {&lt;body&gt;}
+&lt;expr2&gt;? {&lt;body&gt;};
+&lt;expr3&gt;? {&lt;body&gt;};
+</code></pre>
+<p><code>expr2</code>'s code will <strong>not</strong> execute if <code>expr1</code> is true and <code>expr3</code>'s code does not depend on <code>expr1</code>'s code
+to be true to execute.</p>
+<p>As for <em>while</em> statements, the same syntax applies. For instance:</p>
+<p>(code from <a href="https://en.wikipedia.org/wiki/Euclidean_algorithm#Implementations">Wikipedia</a>)</p>
+<pre><code>int a: 128;
+int b: 48;
+
+b != 0 !{
+	a &gt; b ?
+		a: a - b;
+	?
+		b: b - a;;
+};
+
+sync: @a;
+</code></pre>
+<p>Has the equivalent pseudocode:</p>
+<pre><code>a = 128
+b = 47
+
+while b != 0:
+    if a &gt; b:
+        a := a - b
+    else:
+        b := b - a
+return a
+</code></pre>
+<p>Also, for always-true <em>if</em> or <em>while</em> statements, the respective token can be used without an expression <strong>or</strong>
+the token can be doubled, for instance:</p>
+<pre><code>??
+	(puts &quot;I always execute!&quot;);;
+</code></pre>
+<p>and</p>
+<pre><code>?
+	(puts &quot;I always execute!&quot;);;
+</code></pre>
+<p>Have the same output.</p>
+<h3>Expression terminator</h3>
+<p>As you might have noticed from the previous section, expression must be terminated with an
+expression terminator. However much like C that's not true if the body of an expression is one
+expression long. In this case the braces that enclose the expression body could be ommited.
+For instance:</p>
+<pre><code>??
+	(puts &quot;I always execute!&quot;);;
+</code></pre>
+<p>and</p>
+<pre><code>?? {
+	(puts &quot;I always execute!&quot;);
+};
+</code></pre>
+<p>Have the same output.</p>
+<p>In the case they are ommited, the expression terminator that would go to the expression body
+enclosure instead compounds with the terminator of the expression <strong>inside</strong> that enclosure.</p>
+<p>That's why one-line <em>if</em> statements that close an expression hook have two semicolons:
+the first closes the one-line expression and the second closes the hook chain.</p>
+<p><em>while</em> statements can also have a hook expression the same way <em>if</em> statements can. For instance:</p>
+<pre><code>import &quot;std/C/io&quot; &lt;printf&gt;;
+
+int a: 10;
+int b: 20;
+
+a != 0 ! {
+	(printf &quot;Iterating from a: %d&quot;, a);
+	a--;
+}
+b != 0 ! {
+	(printf &quot;Iterating from b: %d&quot;, b);
+	b--;
+};
+
+</code></pre>
+<p>Has the equivalent python code:</p>
+<pre><code>a = 10
+b = 20
+while a != 0:
+	print (&quot;Iterating from a: &quot;, a)
+	a -= 1
+while b != 0:
+	print (&quot;Iterating from b: &quot;, b)
+	b -= 1
+
+</code></pre>
+<h3>Functions</h3>
+<p>To define a function in SD you follow:</p>
+<pre><code>proc? &lt;rettype&gt; &lt;name&gt; : [&lt;args&gt;] { &lt;body&gt; } ;
+</code></pre>
+<p>As in:</p>
+<pre><code>int sum : [int a, int b] {
+	sync: a + b;
+};
+</code></pre>
+<p>To call a function in SD you follow:</p>
+<pre><code>(&lt;name&gt; &lt;args&gt;);
+</code></pre>
+<p>As in:</p>
+<pre><code>int sum_2_plus_3: (sum 2, 3);
+</code></pre>
+<p>If a function is a child of an object, the dereference happens <strong>before</strong> the '<code>()</code>' token. As in:</p>
+<pre><code>let MathOperations: {
+	int sum : [int a, int b] {
+		sync: a + b;
+	};
+};
+MathOperations/(sum 2, 3);
+</code></pre>
+<p>The <code>proc</code> keyword is optional when defining functions if their return type is
+explicitly defined. However, unlike variables, SD does <strong>not</strong> infer the return
+type of a function, therefore only use bare <code>proc &lt;name&gt;</code> if the function doesn't
+return anything.</p>
+<p>Functions (also called <em>procedures</em> in SD) return a value by using the <code>sync</code> keyword.
+As functions are structured by default, they double as classes using the <code>new</code> keyword.
+For example:</p>
+<pre><code>import &quot;std/C/io&quot; &lt;printf&gt;;
+
+proc person : [&lt;char&gt; name, int age] {
+	proc speak : {
+		(printf &quot;Hello, I am %s. I have %d years-old&quot;, ../name, ../age);
+	};
+};
+new person bob : [&quot;Bob&quot;, 21];
+
+bob/(speak);
+</code></pre>
+<p>The same rule about expression terminators also work in procedures: they don't have to have braces
+if their statement body is one line long.</p>
+<p>Function arguments can also be other functions, in which case the syntax for that argument
+inherits the syntax of the function being passed. For instance, in this
+example:</p>
+<pre><code>import &quot;std/io&quot; &lt;puts&gt;
+
+proc wrap : [proc fn[]] {
+	(puts &quot;Hello from wrap&quot;);
+	(fn);
+}
+
+proc wrap_different_syntax : [void fn[]] {
+	(puts &quot;Hello from wrap_different_syntax&quot;);
+	(fn);
+}
+
+proc fn:
+	(puts &quot;Hello from fn&quot;);
+
+(wrap fn);
+(wrap_different_syntax fn);
+</code></pre>
+<p><code>wrap</code> and <code>wrap_different_syntax</code> have the same output.</p>
+<p>Function arguments <em>may</em> be written without commas (if the context is obvious).
+For instance, if a variable is <strong>not</strong> a type and <strong>not</strong> a hook, the use of
+commas is completly optional. For example:</p>
+<pre><code>int sum : [int a, int b]
+	sync: a + b;
+
+(sum 1, 2);
+</code></pre>
+<p>and</p>
+<pre><code>int sum : [int a, int b]
+	sync: a + b;
+
+(sum 1 2);
+</code></pre>
+<p>Have the same output.</p>
+<p>Functions can also have <strong>key arguments</strong>. Key arguments are passed the
+same way they're passed in arrays or objects: using '<code>$</code>' notation.</p>
+<p>For example:</p>
+<pre><code>int div : [int a, int b]
+	sync: a // b;
+</code></pre>
+<p>can be called as</p>
+<pre><code>(div $a: 10, $b : 20);
+</code></pre>
+<p>and</p>
+<pre><code>(div $b : 10, $a: 20);
+</code></pre>
+<p>and they'd have <strong>different</strong> results.</p>
+<p>This type of variable passing is called <em>pass-by-faux</em> in SD.</p>
+<p>Functions can be passed as <em>lambda</em> using the '<code>[]</code>' notation. Lambda notation
+follows:</p>
+<pre><code>&lt;rettype&gt;? [&lt;args&gt;] { &lt;body&gt; } ;
+</code></pre>
+<p>The only difference from normal function notation being the lack of a name.
+For instance, in this example:</p>
+<pre><code>proc wrap : [int fn[int,int]] {
+	int a : 10;
+	int b : 20;
+	(puts &quot;Hello from wrap&quot;);
+	(fn @a, @b);
+};
+(wrap
+	int [int a, int b] {
+		(puts &quot;Hello from lambda&quot;);
+		(printf &quot;The sum is %d&quot;, a + b);
+	}
+);
+</code></pre>
+<p>The call to <code>wrap</code> outputs:</p>
+<pre><code>Hello from wrap
+Hello from lambda
+The sum is 30
+</code></pre>
+<h3>Arrays</h3>
+<p>To define an array in SD you follow:</p>
+<pre><code>&lt;&lt;type&gt;&gt; &lt;name&gt; : {&lt;array body&gt;} ;
+</code></pre>
+<p>As in:</p>
+<pre><code>&lt;int&gt; unix_epoch_32b_bounds : { 1970, 2038 };
+</code></pre>
+<p>The definition using plain angle braces only works if the array is being
+initialised as an <strong>array literal</strong>. If it is so, SD can easily infer the
+size by just couting how many objects there are. However to initialise a
+<strong>fixed size array</strong> you'd follow:</p>
+<pre><code>&lt;&lt;type&gt;.&lt;elem count&gt;&gt; &lt;name&gt; ;
+</code></pre>
+<p>As in:</p>
+<pre><code>&lt;int.2&gt; unix_epoch_32b_bounds;
+</code></pre>
+<p>This array gets indexed in the object table and gets allocated uninitialized
+heap or stack space.</p>
+<p>To declare a nested array, you can either add another '<code>.</code>' after the first
+one <em>or</em> after a nested guard. For instance:</p>
+<pre><code>&lt;int.2.2&gt; _2x2_matrix;
+</code></pre>
+<p>and</p>
+<pre><code>&lt;&lt;int.2&gt;.2&gt; _2x2_matrix;
+</code></pre>
+<p>Have the same output.</p>
+<p>You can also nest them using their guards if the array is being initialised by
+an array literal, as in:</p>
+<pre><code>&lt;&lt;int&gt;&gt; _2x2_matrix : {
+	{ 1, 2 },
+	{ 3, 4 },
+};
+</code></pre>
+<p>However, if nested using an array literal, the length of the biggest array
+element <strong>per index</strong> becomes that index's size. For example:</p>
+<pre><code>&lt;&lt;char&gt;&gt; names: {
+	&quot;Alice Smith&quot;,
+	&quot;Bob Martin&quot;,
+};
+</code></pre>
+<p>Would be equivalent to <code>&lt;char.12.2&gt;</code>, and the smaller element, <code>&quot;Bob Martin&quot;</code>,
+would have its remaing bytes filled to zero.</p>
+<p>That's in contrast to using a <em>referenced array</em>, in which case the elements
+<em>decay to a pointer</em>, like in C. For instance:</p>
+<pre><code>&lt;char&gt; name1 : &quot;Alice Smith&quot;;
+&lt;char&gt; name2 : &quot;Bob Martin&quot;;
+
+&lt;&lt;char&gt;.2&gt; names : {
+	name1,
+	name2,
+};
+</code></pre>
+<p>Has the equivalent C code:</p>
+<pre><code>char name1[] = &quot;Alice Smith&quot;;
+char name2[] = &quot;Bob Martin&quot;;
+
+char* names[2] = {
+	name1,
+	name2,
+};
+</code></pre>
+<p>Akin to C, SD does not care if there is an &quot;extra&quot; comma in an initialiser
+element: <code>&lt;int&gt; array : { 1 }</code> and <code>&lt;int&gt; array : { 1, }</code> result in the same
+object.</p>
+<p>To partially or sporadically initialise an array, you'd use '<code>$</code>' notation with
+the array element number as the identifier. For example:</p>
+<pre><code>&lt;int.2.2&gt; _2x2_matrix;
+
+_2x2_matrix = {
+	$0.1 : 2,
+	$1.0 : 3,
+	$1.1 : 4,
+	$0.0 : 1,
+}
+</code></pre>
+<p>and</p>
+<pre><code>&lt;int.2&gt; _2_vec;
+
+_2_vec: {
+	$1 : 2,
+	$0 : 1,
+};
+</code></pre>
+<p>are all valid SD code.</p>
+<p>To index an array, you'd use <strong>dot-notation</strong> plus <strong>dash-notation</strong>, as in:</p>
+<pre><code>&lt;int&gt; years : {
+	2022,
+	1984,
+};
+
+int _1984 : years/@1;
+</code></pre>
+<p>The '<code>@</code>' sign here means the same thing it means to regular variables. If we
+don't include it, <code>_1984</code> would be treated as a pointer to <code>years/1</code>.
+The elements are <strong>0-indexed</strong>.</p>
+<h3>Groups</h3>
+<p>In SD, grouping means the expression enclosed by <em>group matchers</em> has a bigger
+precedence than its sibbling's object's expressions. In other languages this
+is achieved by enclosing the expression with '<code>()</code>', for instance <code>1+2*3</code>
+resolutes to <code>7</code> and <code>(1+2)*3</code> resolutes to <code>9</code>. In SD this is done using the
+<code>[]</code> matching tokens. That means that <code>[1+2]*3</code> would result in <code>9</code> in this case.</p>
+<h3>Casts</h3>
+<p>To cast a variable into another type in SD you follow:</p>
+<pre><code>&lt;name&gt;.&lt;type&gt; ;
+</code></pre>
+<p>For example:</p>
+<pre><code>int highest_bit_on = 0b80000000;
+(print &quot;%d\n%d&quot;, highest_bit_on.[signed int], highest_bit_on.[unsigned int]);
+</code></pre>
+<p>outputs</p>
+<pre><code>-0
+2147483648
+</code></pre>
+<p>Qualified types may be enclosed by '<code>[]</code>'.</p>
+<p>Also, for casting qualification of the same type, the type itself can be ommited. For instance, the
+previous example could've been written like:</p>
+<pre><code>int highest_bit_on = 0b80000000;
+(print &quot;%d\n%d&quot;, highest_bit_on.signed, highest_bit_on.unsigned);
+</code></pre>
+<p>As both their types still are <code>int</code>.</p>
+<p>Casts can have a size and a format size be explicitly defined <strong>in bytes</strong>. As in:</p>
+<pre><code>char c : 20;
+c.4; # equivalent to c.int
+</code></pre>
+<p>or</p>
+<pre><code>int all_bits_on_in_4bytes: 0xffffffff;
+all_bits_on_in_4bytes.&lt;char.4&gt; # equivalent to { 0xff, 0xff, 0xff, 0xff }
+</code></pre>
+<p>The compiler (or interpreter) will do some rounding to fit the machine bit address.</p>
+<p>Casts with bigger size get their value pushed close to the least significant bit. For example:</p>
+<pre><code>char c;
+c : 20;  # 0x14        # 1 byte
+c.int    # 0x00000014  # 4 bytes
+</code></pre>
+<p>Casts with smaller size truncate the output close to the least significant bit. For example:</p>
+<pre><code>int c;
+c : 20;  # 0x00000014  # 4 bytes
+c.char;  # 0x14        # 1 byte
+</code></pre>
+<p>Casts can be applied to literals.</p>
+<h3>Branches</h3>
+<p>Compiled SD code (and to some extent interpreted SD code) can make use of
+<strong>branches</strong>. They are defined as follows:</p>
+<pre><code>branch &lt;name&gt; : { &lt;body&gt; } ;
+</code></pre>
+<p>To jump to a branch use the <code>jump</code> keyword. As in:</p>
+<pre><code>proc count_down_to_0 : [int upper_bound] {
+	upper_bound &gt; 0 !:
+		upper_bound--;
+	!jump finish;;
+	
+	branch finish:
+		(puts &quot;Finished&quot;);
+};
+</code></pre>
+<p>However, it is also possible to <em>stack-jump</em> to a branch in SD using the <code>goto</code>
+keyword, then pop using the <code>ret</code> keyword. For instance, this example:</p>
+<pre><code>proc count_down_to_0 : [int upper_bound] {
+	upper_bound &gt; 0 !:
+		upper_bound--;
+	!{
+		goto finish;
+		(puts &quot;Back from goto&quot;);
+		end;
+	};
+	
+	branch finish: {
+		(puts &quot;Finished&quot;);
+		ret;
+	};
+};
+</code></pre>
+<p>outputs</p>
+<pre><code>Finished
+Back from goto
+</code></pre>
+<p>If a branch doesn't have a <code>ret</code> statement, the code continues execution with
+the expression rigth after the branch. If that branched was jumped into using
+<em>goto</em>, it will pop the stack but not send the parser to the callee, it will
+continue executing sequentially.</p>
+<p>If <em>jump</em> is used without a name, it will jump to the begining of its parent
+object <strong>or</strong> the closest hook it finds, for instance, in this example:</p>
+<pre><code>proc guess : {
+	int mistery_number : 42;
+	int guess;
+	!{
+		guess : (random_int_between 0, 100);
+		guess != mistery_number? jump;
+		?? end;;
+	};
+};
+</code></pre>
+<p><em>jump</em> will jump to the while loop rather than the <code>guess</code> procedure.</p>
+<p>The <em>branch</em> keyword can also hook against conditional hooks using the
+following syntax:</p>
+<pre><code>branch &lt;name&gt; :: &lt;expr&gt; &lt;hook token&gt; { &lt;body&gt; } ;?
+</code></pre>
+<p>For example, in this code:</p>
+<pre><code>int a : 42;
+int b : 20;
+int iter_number: 10;
+int _iter_number: @iter_number;
+
+&lt;char&gt; message : &quot;&quot;
+
+branch got_to_42 :: a = b ?{
+	(puts &quot;Got it!&quot;);
+}
+
+branch overshot :: a &lt; b ?{
+	(puts &quot;Overshot!&quot;);
+}
+
+branch loop :: _iter_number &gt; 0 !{
+	_iter_number--;
+	b++;
+	jump;
+}
+
+? {
+	_iter_number: @iter_number;
+	jump loop;
+};
+</code></pre>
+<p>we use two <em>if</em> hooks and one <em>while</em> hook within the same hook chain. The node
+in the hook chain we go to is marked by the <em>branch</em>es.</p>
+<p>SD also implements object resolution flow, which is similar to plain code flow
+but focus more on objects themselves. In this example above, we use the <code>end</code>
+keyword, which ends the resolution of an object <strong>or</strong> hook. If <em>end</em> is used
+on data-like objects it will stop parsing and seek for the end of that object.
+If <em>end</em> is used on text-like objects it will seek for the end of that object.</p>
+<p>The <em>end</em> keyword can be used as an alternative to <code>break</code> and the <em>jump</em> as
+an alternative to <code>continue</code> in other languages.</p>
+<h3>Modules</h3>
+<p>To define a module in SD you follow:</p>
+<pre><code>import &quot;&lt;module file&gt;&quot; &lt;&lt;module object&gt;&gt; ;
+</code></pre>
+<p>As in:</p>
+<pre><code>import &quot;std/io&quot; &lt;puts&gt;;
+</code></pre>
+<p>The string after the module keyword represents a <strong>file path</strong> to the module.
+If the module is a directory with name <code>dir</code>, said directory must have a
+<code>dir.sd</code> file (aka a file with the same name) telling SD how its submodules
+should export. If there is a '<code>/</code>' character in the import string, the fields
+before are assumed to be directories and the last field is assumed to be a
+file.</p>
+<p>After finding the file, it is possible to only import a submodule or a
+single object. To do so, we use the name of the module or object in angle
+braces after the file path.</p>
+<p>The import keyword returns a pointer to the module. The module name can be
+changed by assigning it to another variable, as in:</p>
+<pre><code>let local_module : import &quot;module&quot;;
+</code></pre>
+<p>or by using the <code>as</code> keyword, as in:</p>
+<pre><code>import &quot;module&quot; as local_module;
+</code></pre>
+<p>The difference between the two is that the first one still has the name
+<code>module</code> being used by the local_module, as well as <code>local_module</code>, and the
+second one does not have <code>module</code> as the name of the module but instead
+<code>local_module</code>.</p>
+<p>After a <strong>wrapped</strong> module has been imported, we can unwrap it with the
+<code>unwrap</code> keyword. As in:</p>
+<pre><code>unwrap import &quot;std/io&quot;;
+</code></pre>
+<!-- TODO: add a wrap keyword -->
+<p>In this case, all functions, objects, branches, etc, of the <code>std/io</code> module
+get their own entry in the program's object table and the name <code>io</code> does not.</p>
+<p>As with every SD object, the module does not scope to their sibblings. To do
+so, use the <code>scope</code> keyword, as in:</p>
+<pre><code>scope import &quot;std/io&quot; &lt;puts&gt;;
+
+proc print_hello:
+	(puts &quot;Hello!&quot;);
+</code></pre>
+<p>Now <code>puts</code> can be used from any object down its node.</p>
+<!-- TODO: style this -->
+<p>Made by <a href="https://github.com/matthmr">mH</a>.</p>
+<!-- end markdown -->
 </html>
