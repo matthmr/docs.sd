@@ -11,6 +11,16 @@
       src="/docs.sd/scripts/link-headers.js"
       defer>
 </script>
+<style>
+html, body {
+	color: #e8e6e3;
+	border-color: #181a1b;
+	background-color: #181a1b;
+}
+a {
+	color: #3391ff;
+}
+</style>
 </head>
 
 <!-- begin markdown -->
@@ -79,13 +89,13 @@ SD is an **interpreted** language which means it needs an interpreter to
 execute its source code, in that sense SD could be used as more of a
 scripting language like python rather than a general purpose like C or
 rust. The default interpreter is `sd` (a symbolic link to `sdread`) which
-is a compilation result from `make parser` (see the [compilation guide](https://github.com/matthmr/sd#building)).
+is a compilation result from `make interpreter` (see the [compilation guide](https://github.com/matthmr/sd#building)).
 
 A dump of SD's object table can be written to a file and read by `sd`
 passing the `-s` flag. As per convention, SD source code files have `.sd`
 as extension and object table dumps called *object files* have `.sdo`
 as extension. SD object files are compiled by `sdc`, another result
-of `make parser`.
+of `make interpreter`.
 
 ## Syntax
 

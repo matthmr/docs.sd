@@ -11,6 +11,16 @@
       src="/docs.sd/scripts/link-headers.js"
       defer>
 </script>
+<style>
+html, body {
+	color: #e8e6e3;
+	border-color: #181a1b;
+	background-color: #181a1b;
+}
+a {
+	color: #3391ff;
+}
+</style>
 </head>
 <!-- begin markdown -->
 <h1>SD (Programming Language)</h1>
@@ -74,12 +84,12 @@ source code is done at runtime because the language is interpreted.</p>
 execute its source code, in that sense SD could be used as more of a
 scripting language like python rather than a general purpose like C or
 rust. The default interpreter is <code>sd</code> (a symbolic link to <code>sdread</code>) which
-is a compilation result from <code>make parser</code> (see the <a href="https://github.com/matthmr/sd#building">compilation guide</a>).</p>
+is a compilation result from <code>make interpreter</code> (see the <a href="https://github.com/matthmr/sd#building">compilation guide</a>).</p>
 <p>A dump of SD's object table can be written to a file and read by <code>sd</code>
 passing the <code>-s</code> flag. As per convention, SD source code files have <code>.sd</code>
 as extension and object table dumps called <em>object files</em> have <code>.sdo</code>
 as extension. SD object files are compiled by <code>sdc</code>, another result
-of <code>make parser</code>.</p>
+of <code>make interpreter</code>.</p>
 <h2>Syntax</h2>
 <p>SD has a unique syntax for a scripting language because:</p>
 <ol>
