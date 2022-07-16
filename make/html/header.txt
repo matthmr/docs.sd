@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Documentation - SD</title>
+<link rel="stylesheet"
+      href="docs.sd/styles/source-code.css">
+<link rel="alternate icon"
+      type="image/png"
+      href="docs.sd/assets/favicon.ico">
+<style>
+html, body {
+	color: #e8e6e3;
+	border-color: #181a1b;
+	background-color: #181a1b;
+}
+a {
+	color: #3391ff;
+}
+</style>
+</head>
+<body>
+

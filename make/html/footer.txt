@@ -1,0 +1,10 @@
+<p style="text-align: center;">
+Made by mH
+<a href="https://github.com/matthmr">
+<img src="docs.sd/assets/github.png"
+     width="16"
+     height="16">
+</a>
+</p>
+</body>
+</html>
